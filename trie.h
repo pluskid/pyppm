@@ -20,33 +20,87 @@ public:
     TrieNode(T value, TrieNode<T> *child=NULL)
         :m_value(value), :m_child(child) {
         m_count = 1;
-        m_escape = 0;
+        m_escape = 1;
         m_sibling = NULL;
     }
 };
+
+
+//====================================================================
+// The Trie used in PPM is a special Trie -- all leaves are on the
+// same level.
+//
+// * Nodes with NULL child link are leaves. Leaf node maintain the
+//   following properties:
+//    - value: the symbol predicted by this leaf
+//    - count: the number of occurance of this symbol in this context
+//
+// * The direct parent of a leaf node is a deterministic node, which
+//   maintain the following properties:
+//    - count: the sum of count property of all children
+//    - escape: the number of escape happened in this context
+//
+// * The root node is only there for convenience of manipulation.
+//
+//  * Other nodes are normal nodes used to form the tree skeleton.
+//====================================================================
 
 template <typename T>
 class Trie
 {
 private:
-    TrieNode<T> *m_node;
+    typedef TrieNode<T> Node_t;
+    Node_t *m_node;
     
 public:
-    Trie() :m_node(NULL) { }
+    Trie() :m_root(NULL) { }
     
-    bool encode(Buffer<T> buf, int offset, symbol_t sym) {
-        if (m_node == NULL) {
-            TrieNode<T> *node = new TrieNode<T>(sym);
-            node->m_escape++;
+    // Encode symbol.
+    //
+    // Return true if predict successfully, false if escaped.
+    bool encode(const Buffer<T> &buf, int offset, symbol_t sym) {
+        if (m_root == NULL) {
+            m_root = new Node_t(create_node(buf, offset, sym);
+            
+            // TODO: Encode the escape symbol
 
-            for (int i = buf.length()-1; i >= offset; --i) {
-                node = TrieNode<T>(sym, node);
-            }
-            m_node = node;
-            
-            
+            return false;       // escape
         } else {
+            Node_t *dtm_node = NULL;
+            Node_t *parent = m_root;
+            Node_t *node = NULL;
+
+            for (int i = offset; i < buf.length(); ++i) {
+                node = parent->m_child;
+
+                while (node != NULL &&
+                       node->m_value != buf[i])
+                    node = node->m_sibling;
+
+                if (node == NULL) {
+                    node = create_node(buf, i, sym);
+
+                    node->m_sibling = parent->m_child;
+                    parent->m_child = node;
+
+                    // TODO: Encode escape symbol
+
+                    return false;
+                } else {
+                    parent = node;
+                }
+            }
         }
+    }
+
+    Node_t *create_node(const Buffer<T> &buf, int offset, symbol_t sym) {
+        // Leaf node
+        Node_t *node = new Node_t(sym);
+
+        for (int i = buf.length() - 1; i >= offset; --i) {
+            node = new Node_t(sym, node);
+        }
+        return node;
     }
 };
 
