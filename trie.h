@@ -1,8 +1,12 @@
 #ifndef _TRIE_H_
 #define _TRIE_H_
 
+#include <cassert>
+
 #include "config.h"
 #include "buffer.h"
+#include "arithmetic_encoder.h"
+#include "arithmetic_decoder.h"
 
 template <typename T>
 class TrieNode
@@ -55,16 +59,20 @@ private:
 public:
     Trie() :m_root(NULL) { }
     
-    // Encode symbol.
-    //
-    // Return true if predict successfully, false if escaped.
-    bool encode(const Buffer<T> &buf, int offset, symbol_t sym) {
+    ////////////////////////////////////////////////////////////
+    /// Encode symbol.
+    ///
+    /// Return true if predict successfully, false if escaped.
+    ////////////////////////////////////////////////////////////
+    bool encode(ArithmeticEncoder *encoder, const Buffer<T> &buf,
+                int offset, symbol_t sym) {
         if (m_root == NULL) {
-            m_root = new Node_t(create_node(buf, offset, sym);
-            
-            // TODO: Encode the escape symbol
+            m_root = new Node_t(create_node(buf, offset, sym));
 
-            return false;       // escape
+            // Newly created trie, occurance and escape
+            // should be both 1
+            encoder->encode(1, 2, 2);  // Encode the escape symbol
+            return false;              // Escape
         } else {
             Node_t *dtm_node = NULL;
             Node_t *parent = m_root;
@@ -84,19 +92,23 @@ public:
                     node->m_sibling = parent->m_child;
                     parent->m_child = node;
 
-                    // TODO: Encode escape symbol
-
-                    return false;
+                    // Newly created trie sub-tree, occurance
+                    // and escape should be both 1
+                    encoder->encode(1, 2, 2); // Encode the escape symbol
+                    return false;             // Escape
                 } else {
                     parent = node;
                 }
             }
             
+            code_value cum = 0;
             node = parent->m_child;
             // Search for proper leaf
             while (node != NULL &&
-                   node->m_value != sym)
+                   node->m_value != sym) {
+                cum += node->m_count;
                 node = node->m_sibling;
+            }
 
             if (node == NULL) {
                 // No such node, predict failed
@@ -104,13 +116,16 @@ public:
                 node->m_sibling = parent->m_child;
                 parent->m_child = node;
 
-                // TODO: Encode escape symbol
+                // Encode the escape symbol
+                encoder->encode(cum, parent->m_count, parent->m_count);
                 
+                // Increase the number of occurance of escape symbol
                 parent->m_escape++;
                 parent->m_count++;
             } else {
                 // Predict success
-                // TODO: Encode the symbol
+                // Encode the symbol
+                encoder->encode(cum, cum+node->m_count, parent->m_total);
 
                 node->m_count++;   // node count
                 parent->m_count++; // parent total count
@@ -118,6 +133,20 @@ public:
 
             // TODO: if total count exceed threashold,
             // rescale
+        }
+    }
+
+    wsymbol_t decode(ArithmeticDecoder *decoder, const Buffer<T> &buf, int offset) {
+        wsymbol_t sym;
+        code_value cum;
+
+        if (m_root == NULL) {
+            
+            // Should be an escape symbol
+            cum = decoder->get_cum_freq(2);
+            assert(cum >= 1);
+            decoder->pop_symbol(1, 2, 2); // Pop the escape symbol
+            return ESC_symbol;
         }
     }
 
