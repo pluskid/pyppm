@@ -73,6 +73,7 @@ public:
             for (int i = offset; i < buf.length(); ++i) {
                 node = parent->m_child;
 
+                // Search for proper node
                 while (node != NULL &&
                        node->m_value != buf[i])
                     node = node->m_sibling;
@@ -90,6 +91,33 @@ public:
                     parent = node;
                 }
             }
+            
+            node = parent->m_child;
+            // Search for proper leaf
+            while (node != NULL &&
+                   node->m_value != sym)
+                node = node->m_sibling;
+
+            if (node == NULL) {
+                // No such node, predict failed
+                node = new Node_t(sym);
+                node->m_sibling = parent->m_child;
+                parent->m_child = node;
+
+                // TODO: Encode escape symbol
+                
+                parent->m_escape++;
+                parent->m_count++;
+            } else {
+                // Predict success
+                // TODO: Encode the symbol
+
+                node->m_count++;   // node count
+                parent->m_count++; // parent total count
+            }
+
+            // TODO: if total count exceed threashold,
+            // rescale
         }
     }
 
