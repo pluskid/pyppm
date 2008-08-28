@@ -76,6 +76,29 @@ private:
     
 public:
     Trie() :m_root(NULL) { }
+
+    // Make a uni trie where every node is assigned 1
+    // occurance
+    void make_uni_trie(symbol_t min, symbol_t max) {
+        Node_t *node;
+
+        // Should be a fresh Trie
+        assert(m_root == NULL);
+
+        m_root = new Node_t(0);
+
+        symbol_t i = min;
+        for (;;) {
+            node = new Node_t(i);
+            node->m_sibling = m_root->m_child;
+            m_root->m_child = node;
+            m_root->m_count++;
+
+            if (i == max)
+                break;
+            i++;                // Be care of overflowing
+        }
+    }
     
     ////////////////////////////////////////////////////////////
     /// Encode symbol.

@@ -40,14 +40,14 @@ public:
         // symbol
 
         for (;;) {
-            if (high < Half) {
+            if (m_high < Half) {
                 bit_plus_follow(0);            // Output 0 if in low half
-            } else if (low >= Half) {
+            } else if (m_low >= Half) {
                 bit_plus_follow(1);            // Output 1 if in high half
                 m_low -= Half;
                 m_high -= Half;
-            } else if (low >= First_qtr &&
-                       high < Third_qtr) {
+            } else if (m_low >= First_qtr &&
+                       m_high < Third_qtr) {
                 m_bits_to_follow++;            // Output an opposite bit
                 m_low -= First_qtr;            // later if in middle half
                 m_high -= First_qtr;

@@ -45,7 +45,7 @@ public:
         for (;;) {
             if (m_high < Half) {
                 // Do nothing
-            } else if (low >= Half) {
+            } else if (m_low >= Half) {
                 m_value -= Half;
                 m_low -= Half;
                 m_high -= Half;

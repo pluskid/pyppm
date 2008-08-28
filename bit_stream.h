@@ -1,12 +1,19 @@
 #ifndef _BIT_STREAM_H_
 #define _BIT_STREAM_H_
 
+#include <vector>
 #include <cstdio>
 
 class BitOutputStream
 {
 public:
+    std::vector<int> &m_vec;
+    
+    BitOutputStream(std::vector<int> &vec)
+        :m_vec(vec) { }
+    
     void write(int bit) {
+        m_vec.push_back(bit);
         std::printf("%d\n", bit);
     }
 
@@ -16,15 +23,25 @@ public:
     // will be done.
     void write(int bit, int n) {
         for (int i = 0; i < n; ++i)
-            std::printf("%d\n", bit);
+            write(bit);
     }
 };
 
 class BitInputStream
 {
 public:
+    std::vector<int> &m_vec;
+
+    BitInputStream(std::vector<int> &vec)
+        :m_vec(vec) { }
+    
+        
     int read() {
-        return 0;
+        if (m_vec.empty())
+            return -1;
+        int res = m_vec[0];
+        m_vec.erase(m_vec.begin());
+        return res;
     }
 };
 
