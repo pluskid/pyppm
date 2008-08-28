@@ -77,28 +77,6 @@ private:
 public:
     Trie() :m_root(NULL) { }
 
-    // Make a uni trie where every node is assigned 1
-    // occurance
-    void make_uni_trie(symbol_t min, symbol_t max) {
-        Node_t *node;
-
-        // Should be a fresh Trie
-        assert(m_root == NULL);
-
-        m_root = new Node_t(0);
-
-        symbol_t i = min;
-        for (;;) {
-            node = new Node_t(i);
-            node->m_sibling = m_root->m_child;
-            m_root->m_child = node;
-            m_root->m_count++;
-
-            if (i == max)
-                break;
-            i++;                // Be care of overflowing
-        }
-    }
     
     ////////////////////////////////////////////////////////////
     /// Encode symbol.
@@ -108,7 +86,6 @@ public:
     bool encode(ArithmeticEncoder *encoder, const Buffer<T> &buf,
                 int offset, symbol_t sym) {
         if (m_root == NULL) {
-            m_root = new Node_t(0, create_node(buf, offset, sym));
 
             // Newly created trie, occurance and escape
             // should be both 1
@@ -127,10 +104,6 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
-                    node = create_node(buf, i, sym);
-
-                    node->m_sibling = parent->m_child;
-                    parent->m_child = node;
 
                     // Newly created trie sub-tree, occurance
                     // and escape should be both 1
@@ -153,10 +126,6 @@ public:
 
             if (node == NULL) {
                 // No such node, predict failed
-                node = new Node_t(sym);
-                node->m_sibling = parent->m_child;
-                parent->m_child = node;
-
                 // Encode the escape symbol
                 encoder->encode(cum, parent->m_count, parent->m_count);
                 

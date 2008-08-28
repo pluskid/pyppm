@@ -14,7 +14,6 @@ public:
     
     void write(int bit) {
         m_vec.push_back(bit);
-        std::printf("%d\n", bit);
     }
 
     // Write n bits at a time
