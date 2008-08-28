@@ -68,6 +68,13 @@ public:
             for (int i = 0; ictx > 0; --ictx, ++i) {
                 symbol = m_contexts[ictx].decode(m_buffer, i);
                 if (symbol != ESC_symbol) {
+                    // Update decoding model
+                    for (int j = ictx+1, k = i-1;
+                         j < m_buffer.length();
+                         ++j, --k) {
+                        m_contexts[j].update_model(m_buffer, k, sym);
+                    }
+                    
                     return symbol;
                 }
             }
