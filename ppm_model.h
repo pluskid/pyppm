@@ -58,8 +58,11 @@ public:
                 }
             }
 
-            uni_encode(sym);
+            if (ictx == 0)
+                uni_encode(sym);
         }
+
+        m_buffer << sym;
     }
 
     void finish_encoding() {
@@ -96,18 +99,22 @@ public:
         wsymbol_t symbol;
 
         if (ictx == 0) {
-            return uni_decode();
+            symbol = uni_decode();
         } else {
-            for (int i = 0; ictx >= 0; --ictx, ++i) {
+            for (int i = 0; ictx > 0; --ictx, ++i) {
                 symbol = m_contexts[ictx].decode(m_decoder, m_buffer, i);
                 if (symbol != ESC_symbol) {
                     update_contexts(ictx+1, symbol);
-                    return symbol;
+                    break;
                 }
             }
 
-            return uni_decode();
+            if (ictx == 0)
+                symbol = uni_decode();
         }
+
+        m_buffer << symbol;
+        return symbol;
     }
 
     void finish_decoding() {
