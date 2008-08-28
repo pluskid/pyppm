@@ -3,11 +3,13 @@
 
 #include <cstring>
 
-template <typename T, int N>
+#include "config.h"
+
+template <typename T>
 class Buffer
 {
 private:
-    T m_buf[N+N];
+    T m_buf[Max_no_contexts+Max_no_contexts];
     int m_offset;
     int m_length;
 
@@ -22,12 +24,12 @@ public:
     void operator << (T value) {
         m_buf[m_offset++] = value;
         
-        if (m_length < N) {
+        if (m_length < Max_no_contexts) {
             m_length++;
         } else {
-            if (m_offset == N+N) {
-                std::memmove(m_buf, m_buf+N, N);
-                m_offset = N;
+            if (m_offset == Max_no_contexts+Max_no_contexts) {
+                std::memmove(m_buf, m_buf+Max_no_contexts, Max_no_contexts);
+                m_offset = Max_no_contexts;
             }
         }
     }

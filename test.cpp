@@ -1,10 +1,10 @@
 #include <cstdio>
+#include "ppm_model.h"
 #include "buffer.h"
 
 using namespace std;
 
-template <int N>
-void dump_buffer(const Buffer<char, N> &buf)
+void dump_buffer(const Buffer<char> &buf)
 {
     bool first = true;
     printf("buf = [");
@@ -21,7 +21,7 @@ void dump_buffer(const Buffer<char, N> &buf)
 
 int main(int argc, char *argv[])
 {
-    Buffer<char, 3> buf;
+    Buffer<char> buf;
 
     buf << 'a';
     dump_buffer(buf);

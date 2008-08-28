@@ -1,6 +1,7 @@
 #ifndef _ARITHMETIC_DECODER_H_
 #define _ARITHMETIC_DECODER_H_
 
+#include "bit_stream.h"
 #include "arithmetic_coding.h"
 
 class ArithmeticDecoder
@@ -24,7 +25,7 @@ public:
     void start_decoding() {
         // Input bits to fill the code value
         for (int i = 0; i < Code_value_bits; ++i) {
-            m_value = (m_value<<1) + m_in.read();
+            m_value = (m_value<<1) + m_in->read();
         }
     }
 
@@ -58,7 +59,7 @@ public:
 
             m_low = m_low<<1;
             m_high = (m_high<<1) + 1;
-            m_value = (m_value<<1) + m_in.read();
+            m_value = (m_value<<1) + m_in->read();
         }
     }
 };

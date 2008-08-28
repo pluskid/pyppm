@@ -20,4 +20,12 @@ public:
     }
 };
 
+class BitInputStream
+{
+public:
+    int read() {
+        return 0;
+    }
+};
+
 #endif /* _BIT_STREAM_H_ */

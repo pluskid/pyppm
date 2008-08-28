@@ -8,6 +8,11 @@
 #include "arithmetic_encoder.h"
 #include "arithmetic_decoder.h"
 
+// Forward declaraing
+template <typename T>
+class Trie;
+
+
 template <typename T>
 class TrieNode
 {
@@ -18,11 +23,11 @@ private:
     TrieNode<T> *m_child;       // The first child
     TrieNode<T> *m_sibling;     // The next sibling
 
-    friend class Trie;
+    friend class Trie<T>;
 
 public:
     TrieNode(T value, TrieNode<T> *child=NULL)
-        :m_value(value), :m_child(child) {
+        :m_value(value), m_child(child) {
         m_count = 1;
         m_escape = 1;
         m_sibling = NULL;
@@ -57,7 +62,7 @@ class Trie
 {
 private:
     typedef TrieNode<T> Node_t;
-    Node_t *m_node;
+    Node_t *m_root;
     
     Node_t *create_node(const Buffer<T> &buf, int offset, symbol_t sym) {
         // Leaf node
@@ -80,14 +85,13 @@ public:
     bool encode(ArithmeticEncoder *encoder, const Buffer<T> &buf,
                 int offset, symbol_t sym) {
         if (m_root == NULL) {
-            m_root = new Node_t(create_node(buf, offset, sym));
+            m_root = new Node_t(0, create_node(buf, offset, sym));
 
             // Newly created trie, occurance and escape
             // should be both 1
             encoder->encode(1, 2, 2);  // Encode the escape symbol
             return false;              // Escape
         } else {
-            Node_t *dtm_node = NULL;
             Node_t *parent = m_root;
             Node_t *node = NULL;
 
@@ -138,7 +142,7 @@ public:
             } else {
                 // Predict success
                 // Encode the symbol
-                encoder->encode(cum, cum+node->m_count, parent->m_total);
+                encoder->encode(cum, cum+node->m_count, parent->m_count);
 
                 node->m_count++;   // node count
                 parent->m_count++; // parent total count
@@ -202,7 +206,7 @@ public:
             if (node == NULL) {
                 // No such node, predict failed, should be an escape
                 cum = decoder->get_cum_freq(parent->m_count);
-                assert(cum >= parent->m_count-parent->m_escape);
+                assert(cum >= (code_value)parent->m_count-parent->m_escape);
                 decoder->pop_symbol(parent->m_count-parent->m_escape,
                                     parent->m_count,
                                     parent->m_count);
@@ -229,7 +233,7 @@ public:
     // the related model
     void update_model(const Buffer<T> &buf, int offset, symbol_t sym) {
         if (m_root == NULL) {
-            m_root = new Node_t(create_node(buf, offset, sym));
+            m_root = new Node_t(0, create_node(buf, offset, sym));
         } else {
             Node_t *parent = m_root;
             Node_t *node = NULL;
