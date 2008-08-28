@@ -119,6 +119,7 @@ public:
             }
             
             code_value cum = 0;
+            bool res;
             node = parent->m_child;
             // Search for proper leaf
             while (node != NULL &&
@@ -139,6 +140,7 @@ public:
                 // Increase the number of occurance of escape symbol
                 parent->m_escape++;
                 parent->m_count++;
+                res = false;
             } else {
                 // Predict success
                 // Encode the symbol
@@ -146,10 +148,12 @@ public:
 
                 node->m_count++;   // node count
                 parent->m_count++; // parent total count
+                res = true;
             }
 
-            // TODO: if total count exceed threashold,
+            // TODO: if total count exceed threshold,
             // rescale
+            return res;
         }
     }
 
@@ -224,7 +228,7 @@ public:
                 return node->m_value;
             }
 
-            // TODO: if total count exceed threashold
+            // TODO: if total count exceed threshold
             // rescale
         }
     }
@@ -272,7 +276,7 @@ public:
                 parent->m_count++;
             }
 
-            // TODO: if total count exceed threashold
+            // TODO: if total count exceed threshold
             // rescale
         }
     }
