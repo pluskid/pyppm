@@ -16,8 +16,9 @@ protected:
     Trie_t m_contexts[Max_no_contexts+1];
     Buffer<symbol_t> m_buffer;
 
-    void update_contexts(int ictx, symbol_t sym) {
-        int offset = m_buffer.length() - ictx - 1;
+    void update_contexts(symbol_t sym) {
+        int ictx = 1;
+        int offset = m_buffer.length() - 2;
         while (offset >= 0) {
             m_contexts[ictx].update_model(m_buffer, offset, sym);
             offset--;
@@ -33,7 +34,6 @@ private:
 
     void uni_encode(symbol_t sym) {
         m_encoder->encode(sym, sym+1, No_of_chars);
-        update_contexts(1, sym);
     }
 
 public:
@@ -53,7 +53,6 @@ public:
             
             for (int i = 0; ictx > 0; --ictx, ++i) {
                 if (m_contexts[ictx].encode(m_encoder, m_buffer, i, sym)) {
-                    update_contexts(ictx+1, sym);
                     break;  // predict success
                 }
             }
@@ -62,6 +61,7 @@ public:
                 uni_encode(sym);
         }
 
+        update_contexts(sym);
         m_buffer << sym;
     }
 
@@ -82,7 +82,6 @@ private:
         assert(cum > 0 && cum <= No_of_chars);
         sym = cum-1;
 
-        update_contexts(1, sym);
         return sym;
     }
     
@@ -104,7 +103,6 @@ public:
             for (int i = 0; ictx > 0; --ictx, ++i) {
                 symbol = m_contexts[ictx].decode(m_decoder, m_buffer, i);
                 if (symbol != ESC_symbol) {
-                    update_contexts(ictx+1, symbol);
                     break;
                 }
             }
@@ -113,6 +111,7 @@ public:
                 symbol = uni_decode();
         }
 
+        update_contexts(symbol);
         m_buffer << symbol;
         return symbol;
     }
