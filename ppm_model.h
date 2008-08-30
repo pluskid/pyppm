@@ -18,7 +18,7 @@ protected:
 
     void update_contexts(symbol_t sym) {
         int ictx = 1;
-        int offset = m_buffer.length() - 2;
+        int offset = m_buffer.length() - 1;
         while (offset >= 0) {
             m_contexts[ictx].update_model(m_buffer, offset, sym);
             offset--;
@@ -79,8 +79,9 @@ private:
         code_value cum;
         symbol_t sym;
         cum = m_decoder->get_cum_freq(No_of_chars);
-        assert(cum > 0 && cum <= No_of_chars);
-        sym = cum-1;
+        assert(cum >= 0 && cum < No_of_chars);
+        m_decoder->pop_symbol(cum, cum+1, No_of_chars);
+        sym = cum;
 
         return sym;
     }
