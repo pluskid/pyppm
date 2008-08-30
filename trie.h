@@ -150,7 +150,6 @@ public:
     }
 
     wsymbol_t decode(ArithmeticDecoder *decoder, const Buffer<T> &buf, int offset) {
-        wsymbol_t sym;
         code_value cum;
 
         if (m_root == NULL) {
@@ -173,11 +172,6 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
-                    node = create_node(buf, i, sym);
-
-                    node->m_sibling = parent->m_child;
-                    parent->m_child = node;
-
                     // Newly created trie sub-tree, occurance
                     // and escape should be both 1
                     cum = decoder->get_cum_freq(2);
@@ -246,6 +240,7 @@ public:
 
                     node->m_sibling = parent->m_child;
                     parent->m_child = node;
+                    return;
                 } else {
                     parent = node;
                 }

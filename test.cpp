@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     ArithmeticEncoder *aenc = new ArithmeticEncoder(new BitOutputStream(vec));
     PPMEncoder *penc = new PPMEncoder(aenc);
 
-    char str[] = "Accidentally haha";
+    char str[] = "Accidentally, this is hoho!";
     penc->start_encoding();
     for (int i = 0; i < sizeof(str)/sizeof(str[0]); ++i) {
         penc->encode(str[i]);
