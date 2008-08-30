@@ -194,7 +194,7 @@ public:
             node = parent->m_child;
             // Search for proper leaf
             while (node != NULL &&
-                   curr_cum+node->m_count < cum) {
+                   curr_cum+node->m_count <= cum) {
                 curr_cum += node->m_count;
                 node = node->m_sibling;
             }
