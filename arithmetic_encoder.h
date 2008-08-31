@@ -1,7 +1,7 @@
 #ifndef _ARITHMETIC_ENCODER_H_
 #define _ARITHMETIC_ENCODER_H_
 
-#include "arithmetic_coding.h"
+#include "config.h"
 
 template<typename OutputAdapter>
 class ArithmeticEncoder

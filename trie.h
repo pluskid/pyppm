@@ -139,8 +139,10 @@ public:
                 res = true;
             }
 
-            // TODO: if total count exceed threshold,
-            // rescale
+            if (parent->m_count >= Max_frequency) {
+                scale_frequency(parent);
+            }
+
             return res;
         }
     }
@@ -204,8 +206,9 @@ public:
                 return node->m_value;
             }
 
-            // TODO: if total count exceed threshold
-            // rescale
+            if (parent->m_count >= Max_frequency) {
+                scale_frequency(parent);
+            }
         }
     }
 
@@ -253,10 +256,27 @@ public:
                 parent->m_count++;
             }
 
-            // TODO: if total count exceed threshold
-            // rescale
+            if (parent->m_count >= Max_frequency) {
+                scale_frequency(parent);
+            }
         }
     }
+
+    void scale_frequency(Node_t *parent) 
+    {
+        int cum = 0;
+        Node_t *node = parent->m_child;
+        while (node != NULL) {
+            node->m_count = (node->m_count+1)/2;
+            cum += node->m_count;
+
+            node = node->m_sibling;
+        }
+        parent->m_escape = (parent->m_escape+1)/2;
+        parent->m_count = cum + parent->m_escape;
+    }
+    
+        
 };
 
 #endif /* _TRIE_H_ */
