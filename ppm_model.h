@@ -27,18 +27,24 @@ protected:
     }
 };
 
+template<typename Adapter>
 class PPMEncoder: public PPMModel
 {
 private:
-    ArithmeticEncoder *m_encoder;
+    ArithmeticEncoder<Adapter> *m_encoder;
 
     void uni_encode(wsymbol_t sym) {
         m_encoder->encode(sym, sym+1, No_of_symbols);
     }
 
 public:
-    PPMEncoder(ArithmeticEncoder *encoder)
-        :m_encoder(encoder) { }
+    PPMEncoder(Adapter &ad)
+        :m_encoder(new ArithmeticEncoder<Adapter>(ad)) {
+    }
+
+    ~PPMEncoder() {
+        delete m_encoder;
+    }
 
     void start_encoding() {
         // Do nothing
@@ -73,10 +79,11 @@ public:
     }
 };
 
+template<typename Adapter>
 class PPMDecoder: public PPMModel
 {
 private:
-    ArithmeticDecoder *m_decoder;
+    ArithmeticDecoder<Adapter> *m_decoder;
 
     wsymbol_t uni_decode() {
         code_value cum;
@@ -90,9 +97,15 @@ private:
     }
     
 public:
-    PPMDecoder(ArithmeticDecoder *decoder)
-        :m_decoder(decoder) { }
+    PPMDecoder(Adapter &ad)
+        :m_decoder(new ArithmeticDecoder<Adapter>(ad)) {
+    }
 
+    ~PPMDecoder() {
+        delete m_decoder;
+    }
+
+    
     void start_decoding() {
         m_decoder->start_decoding();
     }

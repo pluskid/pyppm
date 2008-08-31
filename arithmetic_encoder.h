@@ -2,30 +2,71 @@
 #define _ARITHMETIC_ENCODER_H_
 
 #include "arithmetic_coding.h"
-#include "bit_stream.h"
 
+template<typename OutputAdapter>
 class ArithmeticEncoder
 {
 private:
-    BitOutputStream *m_out;
-
+    // For encoding
     code_value m_low;
     code_value m_high;
     int m_bits_to_follow;
 
+    // For buffered bit writing
+    OutputAdapter m_writer;
+    int m_buffer;
+    int m_bits_to_go;
+
     // Output a bit plus following opposite bits
     void bit_plus_follow(int bit) {
-        m_out->write(bit);
-        m_out->write(!bit, m_bits_to_follow);
+        write(bit);
+        write(!bit, m_bits_to_follow);
         m_bits_to_follow = 0;   // clear bits to follow
     }
 
+    ////////////////////////////////////////////////////////////
+    // Buffered bit writing
+    ////////////////////////////////////////////////////////////
+    void write(int bit) {
+        m_buffer >>= 1;
+        if (bit)
+            m_buffer |= 0x80;
+        if (--m_bits_to_go == 0) {
+            m_writer(m_buffer);
+            m_bits_to_go = 8;
+        }
+    }
+
+    // Write n bits at a time
+    // 
+    // NOTE n might be 0, in which case nothing
+    // will be done.
+    void write(int bit, int n) {
+        while (n >= m_bits_to_go) {
+            m_buffer >>= m_bits_to_go;
+            if (bit)
+                m_buffer |= ((bit<<m_bits_to_go)-1)<<8;
+            m_writer(m_buffer);
+            n -= m_bits_to_go;
+            m_bits_to_go = 8;
+        }
+        m_buffer >>= n;
+        if (bit)
+            m_buffer |= ((bit<<n)-1)<<8;
+        m_bits_to_go -= n;
+    }
+
+    // Flush out the remaining bits if any
+    void flush() {
+        m_buffer >>= m_bits_to_go;
+        m_bits_to_go = 8;
+        m_writer(m_buffer);
+    }
+    
 public:
-    ArithmeticEncoder(BitOutputStream *out=NULL)
-        :m_out(out) {
-        m_low = 0;
-        m_high = Top_value;
-        m_bits_to_follow = 0;
+    ArithmeticEncoder(OutputAdapter &writer)
+        :m_low(0), m_high(Top_value), m_bits_to_follow(0),
+         m_writer(writer), m_buffer(0), m_bits_to_go(8) {
     }
 
     // Encode a symbol
@@ -68,6 +109,7 @@ public:
         } else {
             bit_plus_follow(1);
         }
+        flush();
     }
 };
 

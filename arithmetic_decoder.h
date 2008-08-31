@@ -1,31 +1,51 @@
 #ifndef _ARITHMETIC_DECODER_H_
 #define _ARITHMETIC_DECODER_H_
 
-#include "bit_stream.h"
 #include "arithmetic_coding.h"
 
+template<typename InputAdapter>
 class ArithmeticDecoder
 {
 private:
-    BitInputStream *m_in;
-
+    // For Decoding
     code_value m_value;         // Currently-seen code value
     code_value m_low;           // low end of current region
     code_value m_high;          // high end of current region
 
-public:
-    ArithmeticDecoder(BitInputStream *in=NULL)
-        :m_in(in) {
-        m_low = 0;
-        m_value = 0;
-        m_high = Top_value;
+    // For buffered bit reading
+    InputAdapter m_reader;
+    int m_buffer;
+    int m_bits_to_go;
+        
+    int read() {
+        int res;
+
+        if (m_bits_to_go == 0) {
+            m_buffer = m_reader();
+            if (m_buffer == EOF) { // NOTE: it might be indicating a
+                m_buffer = 0;      // problem when reading too many EOF
+            }
+            m_bits_to_go = 8;
+        }
+
+        res = m_buffer & 1;
+        m_buffer >>= 1;
+        m_bits_to_go--;
+
+        return res;
     }
 
+public:
+    ArithmeticDecoder(InputAdapter &reader)
+        :m_value(0), m_low(0), m_high(Top_value),
+         m_reader(reader), m_buffer(0), m_bits_to_go(0) {
+    }
+    
     // Start decoding
     void start_decoding() {
         // Input bits to fill the code value
         for (int i = 0; i < Code_value_bits; ++i) {
-            m_value = (m_value<<1) + m_in->read();
+            m_value = (m_value<<1) + read();
         }
     }
 
@@ -59,7 +79,7 @@ public:
 
             m_low = m_low<<1;
             m_high = (m_high<<1) + 1;
-            m_value = (m_value<<1) + m_in->read();
+            m_value = (m_value<<1) + read();
         }
     }
 };

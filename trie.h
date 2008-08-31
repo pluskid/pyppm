@@ -83,14 +83,13 @@ public:
     ///
     /// Return true if predict successfully, false if escaped.
     ////////////////////////////////////////////////////////////
-    bool encode(ArithmeticEncoder *encoder, const Buffer<T> &buf,
+    template<typename Adapter>
+    bool encode(ArithmeticEncoder<Adapter> *encoder, const Buffer<T> &buf,
                 int offset, symbol_t sym) {
         if (m_root == NULL) {
 
-            // Newly created trie, occurance and escape
-            // should be both 1
-            encoder->encode(1, 2, 2);  // Encode the escape symbol
-            return false;              // Escape
+            // Context not initialized yet, simply escape
+            return false;
         } else {
             Node_t *parent = m_root;
             Node_t *node = NULL;
@@ -146,15 +145,13 @@ public:
         }
     }
 
-    wsymbol_t decode(ArithmeticDecoder *decoder, const Buffer<T> &buf, int offset) {
+    template<typename Adapter>
+    wsymbol_t decode(ArithmeticDecoder<Adapter> *decoder, const Buffer<T> &buf, int offset) {
         code_value cum;
 
         if (m_root == NULL) {
-            
-            // Should be an escape symbol
-            cum = decoder->get_cum_freq(2);
-            assert(cum >= 1);
-            decoder->pop_symbol(1, 2, 2); // Pop the escape symbol
+
+            // Context not initialized yet, simply escape
             return ESC_symbol;
         } else {
             Node_t *parent = m_root;

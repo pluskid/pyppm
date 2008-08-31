@@ -6,7 +6,7 @@ typedef unsigned char symbol_t;
 
 // Type that can hold normal symbol as well as special symbols like
 // ESC and EOF
-typedef unsigned int wsymbol_t;
+typedef int wsymbol_t;
 
 // Max number of contexts in the PPM model
 #define Max_no_contexts 6
