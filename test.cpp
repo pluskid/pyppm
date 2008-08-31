@@ -34,8 +34,6 @@ int main(int argc, char *argv[])
     wsymbol_t sym;
     for (;;) {
         sym = pdec->decode();
-        printf("[%d]", sym);
-        fflush(stdout);
         if (sym == EOF_symbol)
             break;
         fputc(sym, fnew);

@@ -69,7 +69,7 @@ private:
         Node_t *node = new Node_t(sym);
 
         for (int i = buf.length() - 1; i >= offset; --i) {
-            node = new Node_t(sym, node);
+            node = new Node_t(buf[i], node);
         }
         return node;
     }
