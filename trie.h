@@ -247,7 +247,7 @@ public:
                 parent->m_child = node;
 
                 parent->m_escape++;
-                parent->m_count++;
+                parent->m_count += 2; // both escape and symbol
             } else {
                 node->m_count++;
                 parent->m_count++;
