@@ -42,17 +42,26 @@ private:
     // NOTE n might be 0, in which case nothing
     // will be done.
     void write(int bit, int n) {
-        while (n >= m_bits_to_go) {
+        if (n >= m_bits_to_go) {
             m_buffer >>= m_bits_to_go;
             if (bit)
-                m_buffer |= ((bit<<m_bits_to_go)-1)<<8;
+                m_buffer |= ((bit<<m_bits_to_go)-1)<<(8-m_bits_to_go);
             m_writer(m_buffer);
             n -= m_bits_to_go;
             m_bits_to_go = 8;
+
+            while (n >= 8) {
+                if (bit)
+                    m_writer((1<<8)-1);
+                else
+                    m_writer(0);
+                n -= 8;
+            }
         }
+
         m_buffer >>= n;
         if (bit)
-            m_buffer |= ((bit<<n)-1)<<8;
+            m_buffer |= ((bit<<n)-1)<<(8-n);
         m_bits_to_go -= n;
     }
 
