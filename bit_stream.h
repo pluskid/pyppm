@@ -38,7 +38,7 @@ public:
         
     int read() {
         if (m_vec.empty())
-            return -1;
+            return 0;
         int res = m_vec[0];
         m_vec.erase(m_vec.begin());
         return res;

@@ -32,8 +32,8 @@ class PPMEncoder: public PPMModel
 private:
     ArithmeticEncoder *m_encoder;
 
-    void uni_encode(symbol_t sym) {
-        m_encoder->encode(sym, sym+1, No_of_chars);
+    void uni_encode(wsymbol_t sym) {
+        m_encoder->encode(sym, sym+1, No_of_symbols);
     }
 
 public:
@@ -44,7 +44,7 @@ public:
         // Do nothing
     }
     
-    void encode(symbol_t sym) {
+    void encode(wsymbol_t sym) {
         int ictx = m_buffer.length();
 
         if (ictx == 0) {
@@ -61,11 +61,14 @@ public:
                 uni_encode(sym);
         }
 
-        update_contexts(sym);
-        m_buffer << sym;
+        if (sym != EOF_symbol) {
+            update_contexts(sym);
+            m_buffer << sym;
+        }
     }
 
     void finish_encoding() {
+        encode(EOF_symbol);
         m_encoder->finish_encoding();
     }
 };
@@ -77,10 +80,10 @@ private:
 
     wsymbol_t uni_decode() {
         code_value cum;
-        symbol_t sym;
-        cum = m_decoder->get_cum_freq(No_of_chars);
-        assert(cum >= 0 && cum < No_of_chars);
-        m_decoder->pop_symbol(cum, cum+1, No_of_chars);
+        wsymbol_t sym;
+        cum = m_decoder->get_cum_freq(No_of_symbols);
+        assert(cum >= 0 && cum < No_of_symbols);
+        m_decoder->pop_symbol(cum, cum+1, No_of_symbols);
         sym = cum;
 
         return sym;
@@ -112,8 +115,10 @@ public:
                 symbol = uni_decode();
         }
 
-        update_contexts(symbol);
-        m_buffer << symbol;
+        if (symbol != EOF_symbol) {
+            update_contexts(symbol);
+            m_buffer << symbol;
+        }
         return symbol;
     }
 
