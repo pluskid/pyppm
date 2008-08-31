@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     char str[] = "Accidentally, this is hoho!";
     penc->start_encoding();
-    for (int i = 0; i < sizeof(str)/sizeof(str[0]); ++i) {
+    for (int i = 0; i < strlen(str); ++i) {
         penc->encode(str[i]);
     }
     penc->finish_encoding();
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     ArithmeticDecoder *adec = new ArithmeticDecoder(new BitInputStream(vec));
     PPMDecoder *pdec = new PPMDecoder(adec);
     pdec->start_decoding();
-    for (int i = 0; i < sizeof(str)/sizeof(str[0]); ++i) {
+    for (int i = 0; i < strlen(str); ++i) {
         printf("[%c]", pdec->decode());
     }
     pdec->finish_decoding();

@@ -104,10 +104,7 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
-
-                    // Newly created trie sub-tree, occurance
-                    // and escape should be both 1
-                    encoder->encode(1, 2, 2); // Encode the escape symbol
+                    // Context not match, simply skip
                     return false;             // Escape
                 } else {
                     parent = node;
@@ -172,11 +169,7 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
-                    // Newly created trie sub-tree, occurance
-                    // and escape should be both 1
-                    cum = decoder->get_cum_freq(2);
-                    assert(cum >= 1);
-                    decoder->pop_symbol(1, 2, 2);
+                    // Context not match, simply skip
                     return ESC_symbol;
                 } else {
                     parent = node;
