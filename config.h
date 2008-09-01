@@ -33,6 +33,9 @@ typedef unsigned long code_value;   /* Type of an arithmetic code
                                      * value */
 
 #define Max_frequency ((1<<(Code_value_bits-2))-1) /* Max total frequency */
+#define Min_frequency 512       /* Node with less freq will be removed */
+#define Rescale_factor 32       /* By what factor does the frequency
+                                 * be rescaled */
 
 #define Top_value (((code_value)1 << Code_value_bits) - 1) /* Largest
                                                             * code value */

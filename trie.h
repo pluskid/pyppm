@@ -123,19 +123,20 @@ public:
             if (node == NULL) {
                 // No such node, predict failed
                 // Encode the escape symbol
+                assert(cum == (code_value)(parent->m_count-parent->m_escape));
                 encoder->encode(cum, parent->m_count, parent->m_count);
                 
                 // Increase the number of occurance of escape symbol
-                parent->m_escape++;
-                parent->m_count++;
+                // parent->m_escape++;
+                // parent->m_count++;
                 res = false;
             } else {
                 // Predict success
                 // Encode the symbol
                 encoder->encode(cum, cum+node->m_count, parent->m_count);
 
-                node->m_count++;   // node count
-                parent->m_count++; // parent total count
+                // node->m_count++;   // node count
+                // parent->m_count++; // parent total count
                 res = true;
             }
 
@@ -193,16 +194,16 @@ public:
                                     parent->m_count,
                                     parent->m_count);
 
-                parent->m_escape++;
-                parent->m_count++;
+                // parent->m_escape++;
+                // parent->m_count++;
                 
                 return ESC_symbol;
             } else {
                 // Predict success
                 decoder->pop_symbol(curr_cum, curr_cum+node->m_count,
                                     parent->m_count);
-                parent->m_count++;
-                node->m_count++;
+                // parent->m_count++;
+                // node->m_count++;
                 return node->m_value;
             }
 
@@ -264,16 +265,35 @@ public:
 
     void scale_frequency(Node_t *parent) 
     {
+       // printf("Rescaling... [%d]", parent->m_count);
+       // fflush(stdout);
+        int cnt = 0;
+        
         int cum = 0;
         Node_t *node = parent->m_child;
+        Node_t *prev = NULL;
         while (node != NULL) {
-            node->m_count = (node->m_count+1)/2;
-            cum += node->m_count;
-
+            if (node->m_count <= Min_frequency // Delete nodes with small frequency
+                && (cum > 0 || node->m_sibling != NULL)) // But keep at least 1 node
+            {
+                if (prev == NULL) {
+                    parent->m_child = node->m_sibling;
+                } else {
+                    prev->m_sibling = node->m_sibling;
+                }
+                cnt++;
+                delete node;
+            } else {
+                node->m_count = (node->m_count+Rescale_factor-1)/Rescale_factor;
+                cum += node->m_count;
+                prev = node;
+            }
+            
             node = node->m_sibling;
         }
-        parent->m_escape = (parent->m_escape+1)/2;
+        parent->m_escape = (parent->m_escape+Rescale_factor-1)/Rescale_factor;
         parent->m_count = cum + parent->m_escape;
+//        printf("->[%d] (%4d deleted)\n", parent->m_count, cnt);
     }
     
         

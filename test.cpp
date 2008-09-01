@@ -22,25 +22,25 @@ int main(int argc, char *argv[])
 
     fclose(fout);
     fclose(forig);
-    printf("------------------------------------\n");
+    // printf("------------------------------------\n");
     
-    FILE *fin = fopen("encoded.txt", "rb");
-    FILE *fnew = fopen("decoded.txt", "wb");
+    // FILE *fin = fopen("encoded.txt", "rb");
+    // FILE *fnew = fopen("decoded.txt", "wb");
 
-    FileInputAdapter fiad(fin);
+    // FileInputAdapter fiad(fin);
     
-    PPMDecoder<FileInputAdapter> *pdec = new PPMDecoder<FileInputAdapter>(fiad);
-    pdec->start_decoding();
-    wsymbol_t sym;
-    for (;;) {
-        sym = pdec->decode();
-        if (sym == EOF_symbol)
-            break;
-        fputc(sym, fnew);
-    }
-    pdec->finish_decoding();
-    fclose(fin);
-    fclose(fnew);
+    // PPMDecoder<FileInputAdapter> *pdec = new PPMDecoder<FileInputAdapter>(fiad);
+    // pdec->start_decoding();
+    // wsymbol_t sym;
+    // for (;;) {
+    //     sym = pdec->decode();
+    //     if (sym == EOF_symbol)
+    //         break;
+    //     fputc(sym, fnew);
+    // }
+    // pdec->finish_decoding();
+    // fclose(fin);
+    // fclose(fnew);
     
     return 0;
 }
