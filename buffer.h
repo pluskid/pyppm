@@ -10,12 +10,13 @@ class Buffer
 {
 private:
     T m_buf[Max_no_contexts+Max_no_contexts];
+    T *m_base;
     int m_offset;
     int m_length;
 
 public:
     Buffer()
-        :m_offset(0), m_length(0)
+        :m_base(m_buf), m_offset(0), m_length(0)
         { }
 
     // Append a value to the buffer, the buffer holds
@@ -27,9 +28,11 @@ public:
         if (m_length < Max_no_contexts) {
             m_length++;
         } else {
+            m_base++;
             if (m_offset == Max_no_contexts+Max_no_contexts) {
                 std::memmove(m_buf, m_buf+Max_no_contexts, Max_no_contexts);
                 m_offset = Max_no_contexts;
+                m_base = m_buf;
             }
         }
     }
@@ -37,7 +40,7 @@ public:
     // Get value from the buffer. The index should be
     // within [0, m_length) , and it is not checked.
     T operator[] (int pos) const {
-        return m_buf[pos+m_offset-m_length];
+        return m_base[pos];
     }
 
     // Get the length of the buffer
