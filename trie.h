@@ -7,6 +7,7 @@
 #include "buffer.h"
 #include "arithmetic_encoder.h"
 #include "arithmetic_decoder.h"
+#include "slab_allocator.h"
 
 // Forward declaraing
 template <typename T>
@@ -62,14 +63,16 @@ class Trie
 {
 private:
     typedef TrieNode<T> Node_t;
+
+    SlabAllocator<Node_t> m_allocator;
     Node_t *m_root;
     
     Node_t *create_node(const Buffer<T> &buf, int offset, symbol_t sym) {
         // Leaf node
-        Node_t *node = new Node_t(sym);
+        Node_t *node = new(m_allocator.allocate()) Node_t(sym);
 
         for (int i = buf.length() - 1; i >= offset; --i) {
-            node = new Node_t(buf[i], node);
+            node = new(m_allocator.allocate()) Node_t(buf[i], node);
         }
         return node;
     }
@@ -126,17 +129,12 @@ public:
                 assert(cum == (code_value)(parent->m_count-parent->m_escape));
                 encoder->encode(cum, parent->m_count, parent->m_count);
                 
-                // Increase the number of occurance of escape symbol
-                // parent->m_escape++;
-                // parent->m_count++;
                 res = false;
             } else {
                 // Predict success
                 // Encode the symbol
                 encoder->encode(cum, cum+node->m_count, parent->m_count);
 
-                // node->m_count++;   // node count
-                // parent->m_count++; // parent total count
                 res = true;
             }
 
@@ -194,16 +192,11 @@ public:
                                     parent->m_count,
                                     parent->m_count);
 
-                // parent->m_escape++;
-                // parent->m_count++;
-                
                 return ESC_symbol;
             } else {
                 // Predict success
                 decoder->pop_symbol(curr_cum, curr_cum+node->m_count,
                                     parent->m_count);
-                // parent->m_count++;
-                // node->m_count++;
                 return node->m_value;
             }
 
@@ -217,7 +210,7 @@ public:
     // the related model
     void update_model(const Buffer<T> &buf, int offset, symbol_t sym) {
         if (m_root == NULL) {
-            m_root = new Node_t(0, create_node(buf, offset, sym));
+            m_root = new(m_allocator.allocate()) Node_t(0, create_node(buf, offset, sym));
         } else {
             Node_t *parent = m_root;
             Node_t *node = NULL;
@@ -246,7 +239,7 @@ public:
                 node = node->m_sibling;
 
             if (node == NULL) {
-                node = new Node_t(sym);
+                node = new(m_allocator.allocate()) Node_t(sym);
                 node->m_sibling = parent->m_child;
                 parent->m_child = node;
 
@@ -265,10 +258,6 @@ public:
 
     void scale_frequency(Node_t *parent) 
     {
-       // printf("Rescaling... [%d]", parent->m_count);
-       // fflush(stdout);
-        int cnt = 0;
-        
         int cum = 0;
         Node_t *node = parent->m_child;
         Node_t *prev = NULL;
@@ -281,8 +270,7 @@ public:
                 } else {
                     prev->m_sibling = node->m_sibling;
                 }
-                cnt++;
-                delete node;
+                m_allocator.release(node);
             } else {
                 node->m_count = (node->m_count+Rescale_factor-1)/Rescale_factor;
                 cum += node->m_count;
@@ -293,7 +281,6 @@ public:
         }
         parent->m_escape = (parent->m_escape+Rescale_factor-1)/Rescale_factor;
         parent->m_count = cum + parent->m_escape;
-//        printf("->[%d] (%4d deleted)\n", parent->m_count, cnt);
     }
     
         
