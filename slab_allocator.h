@@ -6,11 +6,14 @@
 
 ////////////////////////////////////////////////////////////
 // A slab allocator allocate memory for many objects of the
-// same time. It allocate a big block of Block_size at a time
-// and split it into small chunks to form a freelist. Each
-// time a new chunk is needed, it is fetched from the freelist.
-// When no chunks available in the freelist, a new block is
-// allocated.
+// same time.
+//
+// When memory is needed for an object, it first see whether
+// there are free objects in the freelist. If not, it then
+// look at the current block. It will request a new block if
+// necessary. The new allocated block is not split into the
+// freelist immediately. Only deallocated objects will be put
+// into the freelist.
 //
 // When the slab allocator is destroyed, all the blocks are
 // freed. The allocator will NOT call either constructor
@@ -25,8 +28,12 @@ private:
         Node *next;
     };
 
-    Node *m_blocks;
-    Node *m_freelist;
+    Node  *m_blocks;            // Allocated blocks chained together
+
+    char  *m_block;             // Current block used for allocating
+    size_t m_block_remain;      // How many bytes remained for current block
+
+    Node  *m_freelist;          // Released objects are chained here
 
     void get_new_block() {
         Node *block = (Node *)operator new(Block_size);
@@ -36,23 +43,18 @@ private:
         m_blocks = block;
 
         char *mem = (char *)block;
-        char *end = mem+Block_size;
 
         // Skip the header used to link the blocks together
-        mem += std::max(sizeof(Node), sizeof(T));
+        size_t skip = std::max(sizeof(Node), sizeof(T));
+        mem += skip;
 
-        // Feed the remaining memory to free list
-        while (mem + sizeof(T) <= end) {
-            Node *obj = (Node *)mem;
-            obj->next = m_freelist;
-            m_freelist = obj;
-            mem += sizeof(T);
-        }
+        m_block = mem;
+        m_block_remain = Block_size-skip;
     }
     
 public:
     SlabAllocator()
-        :m_blocks(NULL), m_freelist(NULL) {
+        :m_blocks(NULL), m_block(NULL), m_block_remain(0), m_freelist(NULL) {
     }
     ~SlabAllocator() {
         Node *next;
@@ -66,12 +68,18 @@ public:
     // Allocate 
     T *allocate() {
         if (m_freelist == NULL) {
-            get_new_block();
+            if (m_block_remain < sizeof(T)) {
+                get_new_block();
+            }
+            T *res = (T *)m_block;
+            m_block += sizeof(T);
+            m_block_remain -= sizeof(T);
+            return res;
+        } else {
+            Node *res = m_freelist;
+            m_freelist = m_freelist->next;
+            return (T *)res;
         }
-
-        Node *res = m_freelist;
-        m_freelist = m_freelist->next;
-        return (T *)res;
     }
 
     // Release
