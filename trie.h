@@ -66,6 +66,12 @@ private:
 
     SlabAllocator<Node_t> m_allocator;
     Node_t *m_root;
+
+    // Cache for updating model, set m_cache_parent to NULL to invalidate
+    // the cache
+    Node_t *m_cache_parent;     // The cached parent node
+    Node_t *m_cache_child;      // The cached child node
+    int m_cache_buf_idx;        // The cached index in the buffer
     
     Node_t *create_node(const Buffer<T> &buf, int offset, symbol_t sym) {
         // Leaf node
@@ -78,7 +84,7 @@ private:
     }
     
 public:
-    Trie() :m_root(NULL) { }
+    Trie() :m_root(NULL), m_cache_parent(NULL) { }
 
     
     ////////////////////////////////////////////////////////////
@@ -106,6 +112,11 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
+                    // Set up cache for updating model
+                    m_cache_parent = parent;
+                    m_cache_child = node;
+                    m_cache_buf_idx = i;
+
                     // Context not match, simply skip
                     return false;             // Escape
                 } else {
@@ -122,6 +133,10 @@ public:
                 cum += node->m_count;
                 node = node->m_sibling;
             }
+
+            m_cache_parent = parent;
+            m_cache_child = node;
+            m_cache_buf_idx = buf.length();
 
             if (node == NULL) {
                 // No such node, predict failed
@@ -167,6 +182,11 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
+                    // Setup cache
+                    m_cache_parent = parent;
+                    m_cache_child = node;
+                    m_cache_buf_idx = i;
+                    
                     // Context not match, simply skip
                     return ESC_symbol;
                 } else {
@@ -184,6 +204,10 @@ public:
                 node = node->m_sibling;
             }
 
+            m_cache_parent = parent;
+            m_cache_child = node;
+            m_cache_buf_idx = buf.length();
+            
             if (node == NULL) {
                 // No such node, predict failed, should be an escape
                 cum = decoder->get_cum_freq(parent->m_count);
@@ -209,50 +233,76 @@ public:
     // Update the model, when some symbol is decoded, update
     // the related model
     void update_model(const Buffer<T> &buf, int offset, symbol_t sym) {
-        if (m_root == NULL) {
-            m_root = new(m_allocator.allocate()) Node_t(0, create_node(buf, offset, sym));
-        } else {
-            Node_t *parent = m_root;
-            Node_t *node = NULL;
+        Node_t *parent = NULL;
+        Node_t *node = NULL;
+        if (m_cache_parent == NULL) {
+            // Invalid cache
+            if (m_root == NULL) {
+                m_root = new(m_allocator.allocate()) Node_t(0, create_node(buf, offset, sym));
+            } else {
+                parent = m_root;
+                
+                for (int i = offset; i < buf.length(); ++i) {
+                    node = parent->m_child;
 
-            for (int i = offset; i < buf.length(); ++i) {
+                    while (node != NULL &&
+                           node->m_value != buf[i])
+                        node = node->m_sibling;
+
+                    if (node == NULL) {
+                        node = create_node(buf, i, sym);
+
+                        node->m_sibling = parent->m_child;
+                        parent->m_child = node;
+                        return;
+                    } else {
+                        parent = node;
+                    }
+                }
+
                 node = parent->m_child;
-
                 while (node != NULL &&
-                       node->m_value != buf[i])
+                       node->m_value != sym)
                     node = node->m_sibling;
 
                 if (node == NULL) {
-                    node = create_node(buf, i, sym);
-
+                    node = new(m_allocator.allocate()) Node_t(sym);
                     node->m_sibling = parent->m_child;
                     parent->m_child = node;
-                    return;
+
+                    parent->m_escape++;
+                    parent->m_count += 2; // both escape and symbol
                 } else {
-                    parent = node;
+                    node->m_count++;
+                    parent->m_count++;
                 }
             }
+        } else {
+            parent = m_cache_parent;
 
-            node = parent->m_child;
-            while (node != NULL &&
-                   node->m_value != sym)
-                node = node->m_sibling;
+            if (m_cache_buf_idx == buf.length()) {
+                if (m_cache_child == NULL) {
+                    node = new(m_allocator.allocate()) Node_t(sym);
+                    node->m_sibling = m_cache_parent->m_child;
+                    m_cache_parent->m_child = node;
 
-            if (node == NULL) {
-                node = new(m_allocator.allocate()) Node_t(sym);
-                node->m_sibling = parent->m_child;
-                parent->m_child = node;
-
-                parent->m_escape++;
-                parent->m_count += 2; // both escape and symbol
+                    m_cache_parent->m_escape++;
+                    m_cache_parent->m_count += 2;
+                } else {
+                    m_cache_child->m_count++;
+                    m_cache_parent->m_count++;
+                }
             } else {
-                node->m_count++;
-                parent->m_count++;
+                node = create_node(buf, m_cache_buf_idx, sym);
+                node->m_sibling = m_cache_parent->m_child;
+                m_cache_parent->m_child = node;
             }
+        }
 
-            if (parent->m_count >= Max_frequency) {
-                scale_frequency(parent);
-            }
+        m_cache_parent = NULL;  // Invalidate cache
+
+        if (parent && parent->m_count >= Max_frequency) {
+            scale_frequency(parent);
         }
     }
 
@@ -283,7 +333,6 @@ public:
         parent->m_count = cum + parent->m_escape;
     }
     
-        
 };
 
 #endif /* _TRIE_H_ */
