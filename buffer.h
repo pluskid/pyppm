@@ -5,12 +5,11 @@
 
 #include "config.h"
 
-template <typename T>
 class Buffer
 {
 private:
-    T m_buf[Max_no_contexts+Max_no_contexts];
-    T *m_base;
+    symbol_t m_buf[Max_no_contexts+Max_no_contexts];
+    symbol_t *m_base;
     int m_offset;
     int m_length;
 
@@ -22,7 +21,7 @@ public:
     // Append a value to the buffer, the buffer holds
     // at most N values, earlier values will be discarded
     // when necessary.
-    void operator << (T value) {
+    void operator << (symbol_t value) {
         m_buf[m_offset++] = value;
         
         if (m_length < Max_no_contexts) {
@@ -39,7 +38,7 @@ public:
 
     // Get value from the buffer. The index should be
     // within [0, m_length) , and it is not checked.
-    T operator[] (int pos) const {
+    symbol_t operator[] (int pos) const {
         return m_base[pos];
     }
 

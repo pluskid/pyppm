@@ -12,9 +12,8 @@
 class PPMModel
 {
 protected:
-    typedef Trie<symbol_t> Trie_t;
-    Trie_t m_contexts[Max_no_contexts+1];
-    Buffer<symbol_t> m_buffer;
+    Trie m_contexts[Max_no_contexts+1];
+    Buffer m_buffer;
 
     void update_contexts(symbol_t sym) {
         int ictx = 1;

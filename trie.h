@@ -9,25 +9,19 @@
 #include "arithmetic_decoder.h"
 #include "slab_allocator.h"
 
-// Forward declaraing
-template <typename T>
-class Trie;
-
-
-template <typename T>
 class TrieNode
 {
 private:
-    T m_value;                  // The value of this node
+    symbol_t m_value;           // The value of this node
     unsigned short m_count;     // The scaled count
     unsigned short m_escape;    // The scaled number of escapes
-    TrieNode<T> *m_child;       // The first child
-    TrieNode<T> *m_sibling;     // The next sibling
+    TrieNode *m_child;          // The first child
+    TrieNode *m_sibling;        // The next sibling
 
-    friend class Trie<T>;
+    friend class Trie;
 
 public:
-    TrieNode(T value, TrieNode<T> *child=NULL)
+    TrieNode(symbol_t value, TrieNode *child=NULL)
         :m_value(value), m_child(child) {
         m_count = 1;
         m_escape = 1;
@@ -58,27 +52,25 @@ public:
 //  * Other nodes are normal nodes used to form the tree skeleton.
 //====================================================================
 
-template <typename T>
 class Trie
 {
 private:
-    typedef TrieNode<T> Node_t;
 
-    SlabAllocator<Node_t> m_allocator;
-    Node_t *m_root;
+    SlabAllocator<TrieNode> m_allocator;
+    TrieNode *m_root;
 
     // Cache for updating model, set m_cache_parent to NULL to invalidate
     // the cache
-    Node_t *m_cache_parent;     // The cached parent node
-    Node_t *m_cache_child;      // The cached child node
+    TrieNode *m_cache_parent;     // The cached parent node
+    TrieNode *m_cache_child;      // The cached child node
     int m_cache_buf_idx;        // The cached index in the buffer
     
-    Node_t *create_node(const Buffer<T> &buf, int offset, symbol_t sym) {
+    TrieNode *create_node(const Buffer &buf, int offset, symbol_t sym) {
         // Leaf node
-        Node_t *node = new(m_allocator.allocate()) Node_t(sym);
+        TrieNode *node = new(m_allocator.allocate()) TrieNode(sym);
 
         for (int i = buf.length() - 1; i >= offset; --i) {
-            node = new(m_allocator.allocate()) Node_t(buf[i], node);
+            node = new(m_allocator.allocate()) TrieNode(buf[i], node);
         }
         return node;
     }
@@ -93,15 +85,15 @@ public:
     /// Return true if predict successfully, false if escaped.
     ////////////////////////////////////////////////////////////
     template<typename Adapter>
-    bool encode(ArithmeticEncoder<Adapter> *encoder, const Buffer<T> &buf,
+    bool encode(ArithmeticEncoder<Adapter> *encoder, const Buffer &buf,
                 int offset, symbol_t sym) {
         if (m_root == NULL) {
 
             // Context not initialized yet, simply escape
             return false;
         } else {
-            Node_t *parent = m_root;
-            Node_t *node = NULL;
+            TrieNode *parent = m_root;
+            TrieNode *node = NULL;
 
             for (int i = offset; i < buf.length(); ++i) {
                 node = parent->m_child;
@@ -162,7 +154,7 @@ public:
     }
 
     template<typename Adapter>
-    wsymbol_t decode(ArithmeticDecoder<Adapter> *decoder, const Buffer<T> &buf, int offset) {
+    wsymbol_t decode(ArithmeticDecoder<Adapter> *decoder, const Buffer &buf, int offset) {
         code_value cum;
 
         if (m_root == NULL) {
@@ -170,8 +162,8 @@ public:
             // Context not initialized yet, simply escape
             return ESC_symbol;
         } else {
-            Node_t *parent = m_root;
-            Node_t *node = NULL;
+            TrieNode *parent = m_root;
+            TrieNode *node = NULL;
             
             for (int i = offset; i < buf.length(); ++i) {
                 node = parent->m_child;
@@ -232,13 +224,13 @@ public:
 
     // Update the model, when some symbol is decoded, update
     // the related model
-    void update_model(const Buffer<T> &buf, int offset, symbol_t sym) {
-        Node_t *parent = NULL;
-        Node_t *node = NULL;
+    void update_model(const Buffer &buf, int offset, symbol_t sym) {
+        TrieNode *parent = NULL;
+        TrieNode *node = NULL;
         if (m_cache_parent == NULL) {
             // Invalid cache
             if (m_root == NULL) {
-                m_root = new(m_allocator.allocate()) Node_t(0, create_node(buf, offset, sym));
+                m_root = new(m_allocator.allocate()) TrieNode(0, create_node(buf, offset, sym));
             } else {
                 parent = m_root;
                 
@@ -266,7 +258,7 @@ public:
                     node = node->m_sibling;
 
                 if (node == NULL) {
-                    node = new(m_allocator.allocate()) Node_t(sym);
+                    node = new(m_allocator.allocate()) TrieNode(sym);
                     node->m_sibling = parent->m_child;
                     parent->m_child = node;
 
@@ -282,7 +274,7 @@ public:
 
             if (m_cache_buf_idx == buf.length()) {
                 if (m_cache_child == NULL) {
-                    node = new(m_allocator.allocate()) Node_t(sym);
+                    node = new(m_allocator.allocate()) TrieNode(sym);
                     node->m_sibling = m_cache_parent->m_child;
                     m_cache_parent->m_child = node;
 
@@ -306,11 +298,11 @@ public:
         }
     }
 
-    void scale_frequency(Node_t *parent) 
+    void scale_frequency(TrieNode *parent) 
     {
         int cum = 0;
-        Node_t *node = parent->m_child;
-        Node_t *prev = NULL;
+        TrieNode *node = parent->m_child;
+        TrieNode *prev = NULL;
         while (node != NULL) {
             if (node->m_count <= Min_frequency // Delete nodes with small frequency
                 && (cum > 0 || node->m_sibling != NULL)) // But keep at least 1 node
