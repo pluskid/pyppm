@@ -13,7 +13,7 @@ private:
     int m_bits_to_follow;
 
     // For buffered bit writing
-    OutputAdapter m_writer;
+    OutputAdapter &m_writer;
     int m_buffer;
     int m_bits_to_go;
 

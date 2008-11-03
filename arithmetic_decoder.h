@@ -13,7 +13,7 @@ private:
     code_value m_high;          // high end of current region
 
     // For buffered bit reading
-    InputAdapter m_reader;
+    InputAdapter &m_reader;
     int m_buffer;
     int m_bits_to_go;
         

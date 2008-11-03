@@ -67,7 +67,7 @@ public:
 private:
     static void write_int(unsigned int n, FILE *f) {
         unsigned char ch;
-        for (unsigned int i = 0; i < sizeof(unsigned int); ++i) {
+        for (int i = 0; i < (int)sizeof(unsigned int); ++i) {
             ch = n & 0xFF;
             n >>= 8;
             fwrite(&ch, 1, 1, f);
@@ -78,9 +78,9 @@ private:
         unsigned char buf[sizeof(int)];
         fread(buf, 1, sizeof(buf), f);
         unsigned int n = 0;
-        for (unsigned int i = sizeof(int)-1; i >= 0; --i) {
-            n |= buf[i];
+        for (int i = (int)sizeof(int)-1; i >= 0; --i) {
             n <<= 8;
+            n |= buf[i];
         }
         return n;
     }

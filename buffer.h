@@ -18,6 +18,12 @@ public:
         :m_base(m_buf), m_offset(0), m_length(0)
         { }
 
+    void reset() {
+        m_base = m_buf;
+        m_offset = 0;
+        m_length = 0;
+    }
+
     // Append a value to the buffer, the buffer holds
     // at most N values, earlier values will be discarded
     // when necessary.
