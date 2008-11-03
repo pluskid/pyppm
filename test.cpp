@@ -12,7 +12,8 @@ int main(int argc, char *argv[])
 
     FileOutputAdapter foad(fout);
 
-    PPMEncoder<FileOutputAdapter> *penc = new PPMEncoder<FileOutputAdapter>(foad);
+    PPMEncoder<FileOutputAdapter, DefaultContextUpdater> *penc =
+        new PPMEncoder<FileOutputAdapter, DefaultContextUpdater>(foad);
 
     printf("Encoding...\n");
     penc->start_encoding();
@@ -29,7 +30,8 @@ int main(int argc, char *argv[])
 
     FileInputAdapter fiad(fin);
     
-    PPMDecoder<FileInputAdapter> *pdec = new PPMDecoder<FileInputAdapter>(fiad);
+    PPMDecoder<FileInputAdapter, DefaultContextUpdater> *pdec =
+        new PPMDecoder<FileInputAdapter, DefaultContextUpdater>(fiad);
     pdec->start_decoding();
     wsymbol_t sym;
     for (;;) {
