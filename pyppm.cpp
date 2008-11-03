@@ -52,7 +52,7 @@ static PyObject *Model_New(PyObject *self, PyObject *args)
         } else {
             pm = new PPMModel();
         }        
-        model = PyObject_NEW(Model, &Model_Type);
+        model = PyObject_New(Model, &Model_Type);
         model->model = pm;
     }
 
@@ -62,7 +62,7 @@ static PyObject *Model_New(PyObject *self, PyObject *args)
 static void Model_dealloc(PyObject *self) 
 {
     Model_Ptr(self)->decref();
-    PyMem_DEL(self);
+    PyObject_Del(self);
 }
 
 static PyObject *Model_dump(PyObject *self, PyObject *args) 
