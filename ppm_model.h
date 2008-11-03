@@ -37,6 +37,19 @@ struct PPMModel
             ictx++;
         }
     }
+
+    static void dump(PPMModel *model, FILE *f) {
+        for (int i = 0; i < Max_no_contexts+1; ++i) {
+            model->m_contexts[i].dump(f);
+        }
+    }
+    static PPMModel *load(FILE *f) {
+        PPMModel *model = new PPMModel();
+        for (int i = 0; i < Max_no_contexts+1; ++i) {
+            model->m_contexts[i].load(f);
+        }
+        return model;
+    }
 };
 
 class DefaultContextUpdater
@@ -79,6 +92,10 @@ public:
     ~PPMEncoder() {
         delete m_encoder;
         m_model->decref();
+    }
+
+    PPMModel *model() {
+        return m_model;
     }
 
     void start_encoding() {
@@ -150,6 +167,9 @@ public:
         m_model->decref();
     }
 
+    PPMModel *model() {
+        return m_model;
+    }
     
     void start_decoding() {
         m_decoder->start_decoding();

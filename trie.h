@@ -30,6 +30,60 @@ public:
         if (m_child != NULL)
             m_count++;
     }
+
+    static void dump(TrieNode *node, FILE *f) {
+        char flag = 0;
+        if (node == NULL) {
+            fwrite(&flag, sizeof(flag), 1, f);
+        } else {
+            flag = 1;
+            fwrite(&flag, sizeof(flag), 1, f);
+
+            write_int(node->m_value, f);
+            write_int(node->m_count, f);
+            write_int(node->m_escape, f);
+            dump(node->m_child, f);
+            dump(node->m_sibling, f);
+        }
+    }
+
+    static TrieNode *load(FILE *f) {
+        char flag;
+        fread(&flag, sizeof(flag), 1, f);
+        if (flag == 0) {
+            return NULL;
+        } else {
+            TrieNode *node = (TrieNode *)operator new(sizeof(TrieNode));
+            node->m_value = (symbol_t)read_int(f);
+            node->m_count = (unsigned short)read_int(f);
+            node->m_escape = (unsigned short)read_int(f);
+            node->m_child = load(f);
+            node->m_sibling = load(f);
+
+            return node;
+        }
+    }
+
+private:
+    static void write_int(unsigned int n, FILE *f) {
+        unsigned char ch;
+        for (unsigned int i = 0; i < sizeof(unsigned int); ++i) {
+            ch = n & 0xFF;
+            n >>= 8;
+            fwrite(&ch, 1, 1, f);
+        }
+    }
+
+    static unsigned int read_int(FILE *f) {
+        unsigned char buf[sizeof(int)];
+        fread(buf, 1, sizeof(buf), f);
+        unsigned int n = 0;
+        for (unsigned int i = sizeof(int)-1; i >= 0; --i) {
+            n |= buf[i];
+            n <<= 8;
+        }
+        return n;
+    }
 };
 
 
@@ -77,6 +131,13 @@ private:
     
 public:
     Trie() :m_root(NULL), m_cache_parent(NULL) { }
+
+    void dump(FILE *f) {
+        TrieNode::dump(m_root, f);
+    }
+    void load(FILE *f) {
+        m_root = TrieNode::load(f);
+    }
 
     
     ////////////////////////////////////////////////////////////

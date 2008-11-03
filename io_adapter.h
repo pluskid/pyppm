@@ -17,6 +17,24 @@ public:
     }
 };
 
+class NullOutputAdapter
+{
+private:
+    int m_count;
+public:
+    NullOutputAdapter()
+        :m_count(0) {
+    }
+
+    int count() {
+        return m_count;
+    }
+    
+    void operator() (int ch) {
+        ++m_count;
+    }
+};
+
 class FileInputAdapter
 {
 private:

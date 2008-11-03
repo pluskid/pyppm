@@ -23,6 +23,10 @@ int main(int argc, char *argv[])
 
     fclose(fout);
     fclose(forig);
+
+    FILE *fmodel = fopen("ppmenc.model", "wb");
+    PPMModel::dump(penc->model(), fmodel);
+    fclose(fmodel);
     printf("------------------------------------\n");
     
     FILE *fin = fopen("encoded.txt", "rb");
